@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سایت خلاقانه من | Creative Site</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #ff0080, #00ffcc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .container {
+            flex: 1;
+            position: relative;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        footer {
+            padding: 15px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .controls {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .info {
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎨 سایت هنر تعاملی</h1>
+        <p>اثر هنری با p5.js | لمس صفحه برای تعامل</p>
+    </header>
+    
+    <div class="controls">
+        <button onclick="changeMode('particles')">ذرات</button>
+        <button onclick="changeMode('waves')">امواج</button>
+        <button onclick="changeMode('fireworks')">آتش‌بازی</button>
+        <button onclick="clearBackground()">پاک‌کردن</button>
+    </div>
+    
+    <div class="info">
+        انگشت خود را روی صفحه بکشید یا حرکت دهید
+    </div>
+    
+    <div class="container">
+        <div id="canvas-container"></div>
+    </div>
+    
+    <footer>
+        ساخته شده با ❤️ روی GitHub Pages | 
+        <a href="https://github.com" style="color:#6a11cb;">مشاهده کد</a>
+    </footer>
+
+    <script>
+        let mode = 'particles';
+        let particles = [];
+        let fireworks = [];
+        
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight - 300);
+            canvas.parent('canvas-container');
+            colorMode(HSB, 360, 100, 100, 100);
+            
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        function draw() {
+            if (mode === 'particles') {
+                drawParticles();
+            } else if (mode === 'waves') {
+                drawWaves();
+            } else if (mode === 'fireworks') {
+                drawFireworks();
+            }
+        }
+        
+        class Particle {
+            constructor() {
+                this.pos = createVector(random(width), random(height));
+                this.vel = createVector(random(-1, 1), random(-1, 1));
+                this.size = random(5, 20);
+                this.color = color(random(360), 80, 100, 50);
+            }
+            
+            update() {
+                this.pos.add(this.vel);
+                if (this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+                if (this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+                
+                let mouse = createVector(mouseX, mouseY);
+                let dir = p5.Vector.sub(mouse, this.pos);
+                dir.setMag(0.5);
+                this.vel.add(dir);
+                this.vel.limit(3);
+            }
+            
+            show() {
+                noStroke();
+                fill(this.color);
+                ellipse(this.pos.x, this.pos.y, this.size);
+            }
+        }
+        
+        function drawParticles() {
+            background(0, 0, 0, 10);
+            for (let p of particles) {
+                p.update();
+                p.show();
+            }
+            
+            if (mouseIsPressed) {
+                for (let i = 0; i < 3; i++) {
+                    particles.push(new Particle());
+                    particles[particles.length - 1].pos = createVector(mouseX, mouseY);
+                }
+            }
+        }
+        
+        function drawWaves() {
+            background(0, 10);
+            noFill();
+            strokeWeight(2);
+            
+            for (let i = 0; i < 10; i++) {
+                let hue = (frameCount * 0.5 + i * 36) % 360;
+                stroke(hue, 80, 100, 70);
+                beginShape();
+                for (let x = 0; x <= width; x += 20) {
+                    let y = height/2 + sin(x * 0.01 + frameCount * 0.02 + i) * 100;
+                    y += sin(x * 0.005 + frameCount * 0.01) * 50;
+                    vertex(x, y);
+                }
+                endShape();
+            }
+        }
+        
+        function drawFireworks() {
+            background(0, 25);
+            
+            if (random() < 0.05) {
+                fireworks.push(new Firework());
+            }
+            
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update();
+                fireworks[i].show();
+                if (fireworks[i].done) {
+                    fireworks.splice(i, 1);
+                }
+            }
+        }
+        
+        class Firework {
+            constructor() {
+                this.x = random(width);
+                this.y = height;
+                this.vel = createVector(0, random(-12, -8));
+                this.gravity = createVector(0, 0.2);
+                this.particles = [];
+                this.exploded = false;
+                this.color = color(random(360), 100, 100);
+            }
+            
+            update() {
+                if (!this.exploded) {
+                    this.vel.add(this.gravity);
+                    this.x += this.vel.x;
+                    this.y += this.vel.y;
+                    
+                    if (this.vel.y >= 0) {
+                        this.explode();
+                    }
+                }
+                
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    this.particles[i].update();
+                    if (this.particles[i].alpha <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                
+                this.done = this.exploded && this.particles.length === 0;
+            }
+            
+            explode() {
+                this.exploded = true;
+                for (let i = 0; i < 100; i++) {
+                    this.particles.push(new Spark(this.x, this.y, this.color));
+                }
+            }
+            
+            show() {
+                if (!this.exploded) {
+                    fill(this.color);
+                    noStroke();
+                    ellipse(this.x, this.y, 5);
+                }
+                
+                for (let p of this.particles) {
+                    p.show();
+                }
+            }
+        }
+        
+        class Spark {
+            constructor(x, y, col) {
+                this.pos = createVector(x, y);
+                this.vel = p5.Vector.random2D().mult(random(2, 8));
+                this.alpha = 100;
+                this.col = col;
+                this.size = random(2, 6);
+            }
+            
+            update() {
+                this.vel.mult(0.95);
+                this.pos.add(this.vel);
+                this.alpha -= 1.5;
+            }
+            
+            show() {
+                noStroke();
+                fill(red(this.col), green(this.col), blue(this.col), this.alpha);
+                ellipse(this.pos.x, this.pos.y, this.size);
+            }
+        }
+        
+        function changeMode(newMode) {
+            mode = newMode;
+            if (mode === 'particles') {
+                particles = [];
+                for (let i = 0; i < 100; i++) {
+                    particles.push(new Particle());
+                }
+            }
+        }
+        
+        function clearBackground() {
+            background(0);
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight - 300);
+        }
+        
+        function touchMoved() {
+            return false;
+        }
+    </script>
+</body>
+</html>
